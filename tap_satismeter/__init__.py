@@ -9,7 +9,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 from singer import (get_logger, metadata, utils, write_record, write_schema,
                     write_state)
-from singer.catalog import Catalog, CatalogEntry
+from singer.catalog import Catalog
 from singer.metrics import http_request_timer, record_counter
 from tenacity import retry, stop_after_attempt, wait_fixed
 
@@ -70,35 +70,35 @@ def get_key_properties(schema_name: str) -> List[str]:
     return []
 
 
-def discover_catalog() -> Catalog:
+def discover_catalog():
     streams = []
 
     for schema_name, schema in load_schemas():
 
-        meta_data = metadata.get_standard_metadata(schema=schema, key_properties=get_key_properties(schema_name))
+        meta_data = metadata.get_standard_metadata(schema=schema, schema_name=schema_name,
+                                                   key_properties=get_key_properties(schema_name))
 
-        catalog_entry = CatalogEntry(
-            tap_stream_id=schema_name,
-            stream=schema_name,
-            table=schema_name,
-            metadata=meta_data,
-            key_properties=get_key_properties(schema_name),
-        )
+        # create and add catalog entry
+        catalog_entry = {
+            'stream': schema_name,
+            'tap_stream_id': schema_name,
+            'schema': schema,
+            'metadata': meta_data,
+            'key_properties': get_key_properties(schema_name),
+        }
         streams.append(catalog_entry)
 
-    return Catalog(streams)
+    return {'streams': streams}
 
 
 def output_responses(stream_id, config: dict, state: dict) -> dict:
     """ Query and output the api for individual responses """
 
     while True:
-        previous_state_end_datetime = state.get(
-            'bookmarks', {}).get(stream_id, {}).get('last_record', None)
+        previous_state_end_datetime = state.get('bookmarks', {}).get(stream_id, {}).get('last_record', None)
 
-        # Start where the previous run left off or it's a first run.
-        start_datetime = arrow.get(
-            previous_state_end_datetime or '2015-01-01')
+        # Start where the previous run left off, or it's a first run use the one from the config.
+        start_datetime = arrow.get(previous_state_end_datetime or config.get('start_date'))
 
         # request data from the api in blocks of a month
         end_datetime = start_datetime.shift(months=1)
@@ -148,7 +148,6 @@ def output_responses(stream_id, config: dict, state: dict) -> dict:
 
 def sync(config: dict, state: dict, catalog: Catalog) -> None:
     """ sync performs querying of the api and outputting results. """
-    import ipdb; ipdb.set_trace()
     selected_stream_ids = [s.tap_stream_id for s in catalog.streams]
 
     # Loop over streams in catalog
@@ -173,7 +172,7 @@ def main():
 
     # If discover flag was passed, run discovery mode and dump output to stdout
     if args.discover:
-        discover_catalog().dump()
+        Catalog.from_dict(discover_catalog()).dump()
     # Otherwise run in sync mode
     elif args.catalog:
         state = args.state or {}
