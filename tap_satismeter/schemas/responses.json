@@ -1,12 +1,12 @@
 {
-	"type": ["null", "object"],
-	"additionalProperties": false,
-	"properties": {
-		"project": {
-			"type": ["null", "string"]
+    "type": ["null", "object"],
+    "additionalProperties": false,
+    "properties": {
+        "project": {
+            "type": ["null", "string"]
         },
-		"campaign": {
-			"type": ["null", "string"]
+        "campaign": {
+            "type": ["null", "string"]
         },
         "device": {
             "type": ["null", "object"],
@@ -20,32 +20,32 @@
                 }
             }
         },
-		"rating": {
-			"type": ["null", "integer"]
+        "rating": {
+            "type": ["null", "integer"]
         },
-		"answers": {
+        "answers": {
             "type": ["null", "array"],
             "items": {
                 "type": "string"
             }
         },
-		"feedback": {
-			"type": ["null", "string"]
+        "feedback": {
+            "type": ["null", "string"]
         },
         "dismissed": {
-			"type": ["null", "boolean"]
+            "type": ["null", "boolean"]
         },
         "pending": {
-			"type": ["null", "boolean"]
-		},
-		"created": {
-			"type": ["null", "string"],
-			"format": "date-time"
+            "type": ["null", "boolean"]
+        },
+        "created": {
+            "type": ["null", "string"],
+            "format": "date-time"
         },
         "location": {
             "type": ["null", "object"],
             "additionalProperties": false,
-	        "properties": {
+            "properties": {
                 "country": {
                     "type": ["null", "string"]
                 },
@@ -53,9 +53,6 @@
                     "type": ["null", "string"]
                 },
                 "region": {
-                    "type": ["null", "string"]
-                },
-                "regionName": {
                     "type": ["null", "string"]
                 },
                 "city": {
@@ -79,7 +76,7 @@
         "user": {
             "type": ["null", "object"],
             "additionalProperties": false,
-	        "properties": {
+            "properties": {
                 "id": {
                     "type": ["null", "string"]
                 },
@@ -95,10 +92,6 @@
                 "email": {
                     "type": ["null", "string"]
                 },
-                "createdAt": {
-                    "type": ["null", "string"],
-                    "format": "date-time"
-                },
                 "traits": {
                     "type": ["null", "object"],
                     "additionalProperties": false,
@@ -110,10 +103,6 @@
                             "type": ["null", "string"]
                         },
                         "createdAt": {
-                            "type": ["null", "string"],
-                            "format": "date-time"
-                        },
-                        "signUpDate": {
                             "type": ["null", "string"],
                             "format": "date-time"
                         }
@@ -131,8 +120,8 @@
         "category": {
             "type": ["null", "string"]
         },
-		"score": {
-			"type": ["null", "integer"]
-		}
-	}
+        "score": {
+            "type": ["null", "integer"]
+        }
+    }
 }

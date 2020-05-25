@@ -7,11 +7,11 @@ from typing import List
 import arrow
 import requests
 from requests.auth import HTTPBasicAuth
-from tenacity import retry, stop_after_attempt, wait_fixed
 from singer import (get_logger, metadata, utils, write_record, write_schema,
                     write_state)
-from singer.catalog import Catalog
-from singer.metrics import record_counter, http_request_timer
+from singer.catalog import Catalog, CatalogEntry
+from singer.metrics import http_request_timer, record_counter
+from tenacity import retry, stop_after_attempt, wait_fixed
 
 REQUIRED_CONFIG_KEYS = ["project_id", "api_key"]
 LOGGER = get_logger()
@@ -70,25 +70,23 @@ def get_key_properties(schema_name: str) -> List[str]:
     return []
 
 
-def discover():
+def discover_catalog() -> Catalog:
     streams = []
 
     for schema_name, schema in load_schemas():
 
-        meta_data = metadata.get_standard_metadata(schema=schema, schema_name=schema_name,
-                                                   key_properties=get_key_properties(schema_name))
+        meta_data = metadata.get_standard_metadata(schema=schema, key_properties=get_key_properties(schema_name))
 
-        # create and add catalog entry
-        catalog_entry = {
-            'stream': schema_name,
-            'tap_stream_id': schema_name,
-            'schema': schema,
-            'metadata': meta_data,
-            'key_properties': get_key_properties(schema_name),
-        }
+        catalog_entry = CatalogEntry(
+            tap_stream_id=schema_name,
+            stream=schema_name,
+            table=schema_name,
+            metadata=meta_data,
+            key_properties=get_key_properties(schema_name),
+        )
         streams.append(catalog_entry)
 
-    return {'streams': streams}
+    return Catalog(streams)
 
 
 def output_responses(stream_id, config: dict, state: dict) -> dict:
@@ -150,6 +148,7 @@ def output_responses(stream_id, config: dict, state: dict) -> dict:
 
 def sync(config: dict, state: dict, catalog: Catalog) -> None:
     """ sync performs querying of the api and outputting results. """
+    import ipdb; ipdb.set_trace()
     selected_stream_ids = [s.tap_stream_id for s in catalog.streams]
 
     # Loop over streams in catalog
@@ -174,16 +173,15 @@ def main():
 
     # If discover flag was passed, run discovery mode and dump output to stdout
     if args.discover:
-        catalog = discover()
-        print(json.dumps(catalog, indent=2))
+        discover_catalog().dump()
     # Otherwise run in sync mode
-    else:
-        if args.catalog:
-            catalog = args.catalog
-        else:
-            catalog = discover()
-
-        sync(args.config, args.state, catalog)
+    elif args.catalog:
+        state = args.state or {}
+        sync(args.config, args.state, args.catalog)
+    elif args.properties:
+        catalog = Catalog.from_dict(args.properties)
+        state = args.state or {}
+        sync(args.config, state, catalog)
 
 
 if __name__ == "__main__":
