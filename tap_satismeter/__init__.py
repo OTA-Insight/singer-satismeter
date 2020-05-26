@@ -7,11 +7,11 @@ from typing import List
 import arrow
 import requests
 from requests.auth import HTTPBasicAuth
-from tenacity import retry, stop_after_attempt, wait_fixed
 from singer import (get_logger, metadata, utils, write_record, write_schema,
                     write_state)
 from singer.catalog import Catalog
-from singer.metrics import record_counter, http_request_timer
+from singer.metrics import http_request_timer, record_counter
+from tenacity import retry, stop_after_attempt, wait_fixed
 
 REQUIRED_CONFIG_KEYS = ["project_id", "api_key"]
 LOGGER = get_logger()
@@ -70,7 +70,7 @@ def get_key_properties(schema_name: str) -> List[str]:
     return []
 
 
-def discover():
+def discover_catalog():
     streams = []
 
     for schema_name, schema in load_schemas():
@@ -95,12 +95,10 @@ def output_responses(stream_id, config: dict, state: dict) -> dict:
     """ Query and output the api for individual responses """
 
     while True:
-        previous_state_end_datetime = state.get(
-            'bookmarks', {}).get(stream_id, {}).get('last_record', None)
+        previous_state_end_datetime = state.get('bookmarks', {}).get(stream_id, {}).get('last_record', None)
 
-        # Start where the previous run left off or it's a first run.
-        start_datetime = arrow.get(
-            previous_state_end_datetime or '2015-01-01')
+        # Start where the previous run left off, or it's a first run use the one from the config.
+        start_datetime = arrow.get(previous_state_end_datetime or config.get('start_date'))
 
         # request data from the api in blocks of a month
         end_datetime = start_datetime.shift(months=1)
@@ -174,16 +172,15 @@ def main():
 
     # If discover flag was passed, run discovery mode and dump output to stdout
     if args.discover:
-        catalog = discover()
-        print(json.dumps(catalog, indent=2))
+        Catalog.from_dict(discover_catalog()).dump()
     # Otherwise run in sync mode
-    else:
-        if args.catalog:
-            catalog = args.catalog
-        else:
-            catalog = discover()
-
-        sync(args.config, args.state, catalog)
+    elif args.catalog:
+        state = args.state or {}
+        sync(args.config, args.state, args.catalog)
+    elif args.properties:
+        catalog = Catalog.from_dict(args.properties)
+        state = args.state or {}
+        sync(args.config, state, catalog)
 
 
 if __name__ == "__main__":

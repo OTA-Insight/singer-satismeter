@@ -11,9 +11,9 @@ setup(
     py_modules=["tap_satismeter"],
     install_requires=[
         "singer-python>=5.0.12",
-        "requests>=2.22.0",
-        "arrow>=0.14.5",
-        "tenacity>=5.0.4",
+        "requests>=2.23.0",
+        "arrow>=0.15.6",
+        "tenacity>=6.2.0",
     ],
     entry_points="""
     [console_scripts]
