@@ -61,3 +61,31 @@ Run the tap:
 ```bash
 python __init__.py -c ../config.json --catalog catalog.json > output.json
 ```
+
+## Use with pipelinewise
+
+This tap is compatible to run with pipelinewise. Use this configuration yaml for it:
+
+```yml
+---
+id: "satismeter"
+name: "Satismeter"
+type: "tap-satismeter"
+owner: "mathieu@example.com"
+
+db_conn:
+  project_id: "{PROJECT_ID}"
+  api_key: "{API_KEY}"
+  start_date: "{START_DATE}"
+  user_agent: "{USER_AGENT}"
+
+target: "<your_target>"
+batch_size_rows: 1000
+default_target_schema: "<your_target_db_schema>"
+
+schemas:
+  - source_schema: "satismeter"
+    target_schema: "<your_target_db_schema>"
+    tables:
+    - table_name: "responses"
+```
